@@ -1,16 +1,43 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Presentation, Users, BarChart3, Map, Trophy, RefreshCcw, HelpCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Presentation, Users, BarChart3, Download, Loader2 } from 'lucide-react';
 
 // --- COMPOSANTS DE BASE ---
 
-// Couleurs utilisées pour les graphiques (fidèles à votre présentation Canva)
+// Couleurs utilisées pour les graphiques
 const COLORS = {
-  blue: '#2563eb',   // Pas du tout d'accord / Homme / Tunis / Oui / etc.
-  red: '#dc2626',    // Peu d'accord / Femme / 18-24 ans / etc.
-  yellow: '#eab308', // Neutre / 25-30 ans / Licence / etc.
-  green: '#22c55e',  // D'accord / 30 ans et plus / Master / etc.
-  purple: '#a855f7'  // Tout à fait d'accord / Bac+5 / etc.
+  blue: '#2563eb',   
+  red: '#dc2626',    
+  yellow: '#eab308', 
+  green: '#22c55e',  
+  purple: '#a855f7'  
 };
+
+// Injection d'un script externe via CDN (utilisé pour l'export PPTX)
+const loadScript = (src) => {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.body.appendChild(script);
+  });
+};
+
+// Composant d'Arrière-plan partagé (pour l'affichage et l'export)
+const Background = () => (
+  <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-60 z-0">
+    <div className="blob-1 absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-blue-400 rounded-full blur-[120px]"></div>
+    <div className="blob-2 absolute bottom-[10%] -right-[10%] w-[40%] h-[60%] bg-indigo-400 rounded-full blur-[100px]"></div>
+    <svg className="absolute w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+      <line x1="-10%" y1="110%" x2="110%" y2="-10%" stroke="white" strokeWidth="4" />
+      <line x1="-10%" y1="90%" x2="90%" y2="-10%" stroke="white" strokeWidth="2" />
+    </svg>
+  </div>
+);
 
 // Composant Graphique Secteur (Pie Chart) fait sur mesure en SVG
 const PieChart = ({ data, showLegend = true, size = 200 }) => {
@@ -24,7 +51,7 @@ const PieChart = ({ data, showLegend = true, size = 200 }) => {
   return (
     <div className="flex items-center justify-center gap-4 flex-col sm:flex-row w-full">
       <div style={{ width: size, height: size }} className="relative drop-shadow-md transition-transform hover:scale-105 duration-300">
-        <svg viewBox="-1.2 -1.2 2.4 2.4" className="w-full h-full overflow-visible">
+        <svg viewBox="-1.2 -1.2 2.4 2.4" width={size} height={size} className="w-full h-full overflow-visible">
           {data.map((slice, index) => {
             const value = Number(slice.value);
             if (value === 0) return null;
@@ -57,7 +84,7 @@ const PieChart = ({ data, showLegend = true, size = 200 }) => {
             return (
               <g key={index} className="group cursor-pointer chart-slice">
                 <path d={pathData} fill={slice.color} className="transition-all duration-300" stroke="white" strokeWidth="0.02" />
-                {value >= 4 && ( // N'affiche le texte que si la portion est assez grande
+                {value >= 4 && ( 
                   <text 
                     x={textX * 0.65} 
                     y={textY * 0.65} 
@@ -95,10 +122,8 @@ const PieChart = ({ data, showLegend = true, size = 200 }) => {
 
 // --- PAGES DE PRÉSENTATION ---
 
-const Slide1 = () => {
-  const data1 = [
-    { label: 'Oui', value: 100, color: COLORS.blue }
-  ];
+const Slide1 = ({ isExport = false }) => {
+  const data1 = [{ label: 'Oui', value: 100, color: COLORS.blue }];
   const data2 = [
     { label: 'Homme', value: 59, color: COLORS.blue },
     { label: 'Femme', value: 41, color: COLORS.red }
@@ -111,12 +136,12 @@ const Slide1 = () => {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 animate-fade-in pb-10 min-h-full">
+    <div className={`flex flex-col lg:flex-row gap-8 lg:gap-12 pb-10 min-h-full ${isExport ? '' : 'animate-fade-in'}`}>
       <div className="flex-1 flex flex-col justify-center gap-10">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-indigo-950 mb-4 drop-shadow-sm">Profil de l'échantillon</h1>
         
         <div className="space-y-8">
-          <div className="bg-white/40 backdrop-blur-md p-6 rounded-2xl border border-white/50 shadow-sm transition-transform hover:-translate-y-1">
+          <div className="bg-white/60 backdrop-blur-md p-6 rounded-2xl border border-white/50 shadow-sm transition-transform hover:-translate-y-1">
             <h2 className="text-xl font-bold text-indigo-900 mb-2 flex items-center gap-2">
               <Users className="w-5 h-5" /> Taille globale
             </h2>
@@ -125,7 +150,7 @@ const Slide1 = () => {
             </p>
           </div>
 
-          <div className="bg-white/40 backdrop-blur-md p-6 rounded-2xl border border-white/50 shadow-sm transition-transform hover:-translate-y-1">
+          <div className="bg-white/60 backdrop-blur-md p-6 rounded-2xl border border-white/50 shadow-sm transition-transform hover:-translate-y-1">
             <h2 className="text-xl font-bold text-indigo-900 mb-2 flex items-center gap-2">
               <Users className="w-5 h-5" /> Répartition par genre
             </h2>
@@ -134,7 +159,7 @@ const Slide1 = () => {
             </p>
           </div>
 
-          <div className="bg-white/40 backdrop-blur-md p-6 rounded-2xl border border-white/50 shadow-sm transition-transform hover:-translate-y-1">
+          <div className="bg-white/60 backdrop-blur-md p-6 rounded-2xl border border-white/50 shadow-sm transition-transform hover:-translate-y-1">
             <h2 className="text-xl font-bold text-indigo-900 mb-2 flex items-center gap-2">
               <BarChart3 className="w-5 h-5" /> Tranche d'âge dominante
             </h2>
@@ -151,7 +176,7 @@ const Slide1 = () => {
           { title: "Quel est votre genre ?", data: data2 },
           { title: "Quel est votre âge ?", data: data3 }
         ].map((chart, idx) => (
-          <div key={idx} className="bg-white/70 backdrop-blur-lg p-5 rounded-2xl shadow-md border border-white flex flex-col">
+          <div key={idx} className="bg-white/80 backdrop-blur-lg p-5 rounded-2xl shadow-md border border-white flex flex-col">
             <p className="text-sm font-semibold text-gray-700 mb-1">{chart.title}</p>
             <p className="text-xs text-gray-500 mb-4">105 réponses</p>
             <div className="flex-1 flex items-center justify-center">
@@ -164,7 +189,7 @@ const Slide1 = () => {
   );
 };
 
-const Slide2 = () => {
+const Slide2 = ({ isExport = false }) => {
   const data1 = [
     { label: 'Etudiant(e)', value: 59, color: COLORS.blue },
     { label: 'Salarié(e)', value: 30.5, color: COLORS.red },
@@ -187,10 +212,10 @@ const Slide2 = () => {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 animate-fade-in pb-10 min-h-full">
+    <div className={`flex flex-col lg:flex-row gap-8 lg:gap-12 pb-10 min-h-full ${isExport ? '' : 'animate-fade-in'}`}>
       <div className="flex-1 flex flex-col justify-center gap-10 mt-8 lg:mt-0">
         <div className="space-y-8">
-          <div className="bg-indigo-100/60 backdrop-blur-md p-6 rounded-xl border-2 border-indigo-300 shadow-sm transition-transform hover:-translate-y-1">
+          <div className="bg-indigo-100/80 backdrop-blur-md p-6 rounded-xl border-2 border-indigo-300 shadow-sm transition-transform hover:-translate-y-1">
             <h2 className="text-3xl font-bold text-center text-indigo-950 mb-3">
               Situation socioprofessionnelle
             </h2>
@@ -225,7 +250,7 @@ const Slide2 = () => {
           { title: "Quel est votre niveau d'études ?", data: data2 },
           { title: "Où habitez-vous ?", data: data3 }
         ].map((chart, idx) => (
-          <div key={idx} className="bg-white/70 backdrop-blur-lg p-5 rounded-2xl shadow-md border border-white flex flex-col">
+          <div key={idx} className="bg-white/80 backdrop-blur-lg p-5 rounded-2xl shadow-md border border-white flex flex-col">
             <p className="text-sm font-semibold text-gray-700 mb-1">{chart.title}</p>
             <p className="text-xs text-gray-500 mb-4">105 réponses</p>
             <div className="flex-1 flex items-center justify-center">
@@ -238,7 +263,7 @@ const Slide2 = () => {
   );
 };
 
-const Slide3 = () => {
+const Slide3 = ({ isExport = false }) => {
   const commonLegend = [
     { label: "Pas du tout d'accord", color: COLORS.blue },
     { label: "Peu d'accord", color: COLORS.red },
@@ -270,14 +295,14 @@ const Slide3 = () => {
   ];
 
   return (
-    <div className="flex flex-col animate-fade-in relative pb-10 min-h-full">
-      <div className="flex flex-col md:flex-row md:justify-between items-start mb-8 gap-4 shrink-0">
+    <div className={`flex flex-col pb-10 min-h-full ${isExport ? '' : 'animate-fade-in'}`}>
+      <div className="flex flex-col md:flex-row md:justify-between items-start mb-8 gap-4 shrink-0 z-10">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-indigo-950 drop-shadow-sm mt-4">
           Résultats : Perception des Actions Marketing
         </h1>
         
-        {/* Légende Globale En Haut à Droite */}
-        <div className="hidden md:flex flex-col gap-1.5 bg-white/60 backdrop-blur-md p-3 rounded-lg shadow-sm border border-white shrink-0">
+        {/* Légende Globale */}
+        <div className={`${isExport ? 'flex' : 'hidden md:flex'} flex-col gap-1.5 bg-white/80 backdrop-blur-md p-3 rounded-lg shadow-sm border border-white shrink-0`}>
           {commonLegend.map((item, idx) => (
             <div key={idx} className="flex items-center gap-2 text-xs font-semibold text-gray-700">
               <div className="w-4 h-3" style={{ backgroundColor: item.color }}></div>
@@ -287,9 +312,9 @@ const Slide3 = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 shrink-0 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 shrink-0 mb-8 z-10">
         {/* Graphique 1 */}
-        <div className="bg-white/70 backdrop-blur-lg p-6 rounded-xl shadow-md border border-white flex flex-col relative">
+        <div className="bg-white/80 backdrop-blur-lg p-6 rounded-xl shadow-md border border-white flex flex-col relative">
           <h2 className="text-2xl font-bold text-indigo-950 mb-4 font-serif">Communication</h2>
           <p className="text-sm font-semibold text-gray-800 mb-1 leading-snug">
             3) La communication de l'équipe (réseaux sociaux, médias, annonces) renforce mon intérêt pour cette équipe.
@@ -305,7 +330,7 @@ const Slide3 = () => {
         </div>
 
         {/* Graphique 2 */}
-        <div className="bg-white/70 backdrop-blur-lg p-6 rounded-xl shadow-md border border-white flex flex-col relative">
+        <div className="bg-white/80 backdrop-blur-lg p-6 rounded-xl shadow-md border border-white flex flex-col relative">
            <h2 className="text-2xl font-bold text-transparent mb-4 hidden lg:block">Produits</h2>
           <p className="text-sm font-semibold text-gray-800 mb-1 leading-snug">
             4) Les produits officiels de l'équipe (maillots, accessoires) sont attractifs et bien mis en valeur.
@@ -321,7 +346,7 @@ const Slide3 = () => {
         </div>
 
         {/* Graphique 3 */}
-        <div className="bg-white/70 backdrop-blur-lg p-6 rounded-xl shadow-md border border-white flex flex-col">
+        <div className="bg-white/80 backdrop-blur-lg p-6 rounded-xl shadow-md border border-white flex flex-col">
           <h2 className="text-2xl font-bold text-transparent mb-4 hidden lg:block">Offres</h2>
           <p className="text-sm font-semibold text-gray-800 mb-1 leading-snug">
             5) Les offres proposées par l'équipe (billetterie, promotions, packs) rendent l'achat plus attractif.
@@ -331,20 +356,10 @@ const Slide3 = () => {
             <PieChart data={data3} showLegend={false} size={220} />
           </div>
         </div>
-        
-        {/* Légende Mobile uniquement */}
-        <div className="md:hidden flex flex-wrap justify-center gap-4 bg-white/60 p-4 rounded-lg mt-4">
-          {commonLegend.map((item, idx) => (
-            <div key={idx} className="flex items-center gap-2 text-xs font-semibold text-gray-700">
-              <div className="w-4 h-3" style={{ backgroundColor: item.color }}></div>
-              <span>{item.label}</span>
-            </div>
-          ))}
-        </div>
       </div>
 
-      {/* NOUVEAU BLOC: Conclusion Générale */}
-      <div className="bg-indigo-900/10 backdrop-blur-md p-6 sm:p-8 rounded-2xl border border-indigo-900/20 shadow-inner mt-auto shrink-0 transition-transform hover:-translate-y-1">
+      {/* Conclusion Générale */}
+      <div className="bg-indigo-900/10 backdrop-blur-md p-6 sm:p-8 rounded-2xl border border-indigo-900/20 shadow-inner mt-auto shrink-0 transition-transform hover:-translate-y-1 z-10">
         <h3 className="text-2xl sm:text-3xl font-bold text-indigo-950 mb-4 flex items-center gap-3">
           <Presentation className="w-8 h-8 text-indigo-700" /> Conclusion sur les Actions Marketing
         </h3>
@@ -358,141 +373,13 @@ const Slide3 = () => {
   );
 };
 
-// --- NOUVELLE PAGE 4 : JEU AVEC LE JURY ---
-const Slide4 = () => {
-  const [currentQ, setCurrentQ] = useState(0);
-  const [score, setScore] = useState(0);
-  const [showResult, setShowResult] = useState(false);
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
-
-  const questions = [
-    { 
-      q: "D'après notre étude, quelle tranche d'âge domine massivement l'échantillon des supporters ?", 
-      options: ["Moins de 18 ans", "18-24 ans", "25-30 ans", "30 ans et plus"], 
-      a: 1 
-    },
-    { 
-      q: "Parmi nos répondants, quelle est la situation socioprofessionnelle majoritaire ?", 
-      options: ["Les salariés", "Les chômeurs", "Les étudiants", "Les indépendants"], 
-      a: 2 
-    },
-    { 
-      q: "Laquelle de ces actions marketing a reçu le plus grand taux d'approbation (D'accord + Tout à fait d'accord) ?", 
-      options: ["La Communication", "Les Produits officiels", "Les Offres (billetterie)"], 
-      a: 1 
-    }
-  ];
-
-  const handleAnswer = (idx) => {
-    if (selectedAnswer !== null) return; // Prevent double click
-    
-    setSelectedAnswer(idx);
-    
-    setTimeout(() => {
-      if (idx === questions[currentQ].a) {
-        setScore(score + 1);
-      }
-      
-      if (currentQ < questions.length - 1) {
-        setCurrentQ(currentQ + 1);
-        setSelectedAnswer(null);
-      } else {
-        setShowResult(true);
-      }
-    }, 1000); // 1 second delay to see the result
-  };
-
-  const resetGame = () => {
-    setCurrentQ(0);
-    setScore(0);
-    setShowResult(false);
-    setSelectedAnswer(null);
-  };
-
-  return (
-    <div className="flex flex-col animate-fade-in pb-10 min-h-full items-center justify-center pt-8">
-      
-      {!showResult ? (
-        <div className="w-full max-w-4xl bg-white/80 backdrop-blur-xl p-8 sm:p-12 rounded-3xl shadow-xl border border-white relative overflow-hidden">
-           {/* Progress bar */}
-           <div className="absolute top-0 left-0 h-2 bg-indigo-100 w-full">
-             <div 
-               className="h-full bg-indigo-600 transition-all duration-500" 
-               style={{ width: `${((currentQ) / questions.length) * 100}%` }}
-             ></div>
-           </div>
-
-          <div className="flex items-center gap-3 mb-8 justify-center text-indigo-900">
-            <HelpCircle className="w-8 h-8" />
-            <h2 className="text-3xl font-bold">À vous de jouer, cher Jury !</h2>
-          </div>
-          
-          <div className="bg-indigo-50 p-6 rounded-2xl mb-8 border border-indigo-100">
-            <p className="text-sm text-indigo-600 font-bold mb-2 uppercase tracking-wider">Question {currentQ + 1} sur {questions.length}</p>
-            <h3 className="text-2xl font-semibold text-gray-800 leading-snug">
-              {questions[currentQ].q}
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {questions[currentQ].options.map((option, idx) => {
-              let btnClass = "bg-white text-gray-700 hover:bg-indigo-50 border-gray-200";
-              
-              if (selectedAnswer !== null) {
-                if (idx === questions[currentQ].a) {
-                  btnClass = "bg-green-500 text-white border-green-600 scale-[1.02] shadow-lg"; // Correct answer styling
-                } else if (idx === selectedAnswer) {
-                  btnClass = "bg-red-500 text-white border-red-600 opacity-80"; // Wrong answer selected
-                } else {
-                  btnClass = "bg-gray-100 text-gray-400 border-gray-200 opacity-50"; // Unselected others
-                }
-              }
-
-              return (
-                <button
-                  key={idx}
-                  disabled={selectedAnswer !== null}
-                  onClick={() => handleAnswer(idx)}
-                  className={`p-5 rounded-2xl border-2 font-medium text-lg text-left transition-all duration-300 ${btnClass}`}
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        <div className="w-full max-w-2xl bg-white/90 backdrop-blur-xl p-12 rounded-3xl shadow-2xl border border-white text-center animate-fade-in">
-          <Trophy className="w-24 h-24 text-yellow-400 mx-auto mb-6 drop-shadow-md" />
-          <h2 className="text-4xl font-bold text-indigo-950 mb-4">Résultat du Jury</h2>
-          
-          <div className="text-6xl font-black text-indigo-600 mb-6">
-            {score} <span className="text-3xl text-gray-400">/ {questions.length}</span>
-          </div>
-
-          <p className="text-xl text-gray-700 font-medium mb-10">
-            {score === questions.length ? "Parfait ! Vous avez suivi la présentation avec brio ! 👏" : 
-             score > 0 ? "Pas mal ! Mais quelques détails vous ont échappé. 😉" : 
-             "Aïe... Une petite session de rattrapage s'impose ! 😅"}
-          </p>
-
-          <button 
-            onClick={resetGame}
-            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full font-bold text-lg transition-transform hover:scale-105 shadow-lg"
-          >
-            <RefreshCcw className="w-5 h-5" /> Rejouer le quiz
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
 
 // --- APPLICATION PRINCIPALE ---
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState(0);
-  const totalPages = 4; // Mise à jour du nombre de pages (4 pages maintenant)
+  const [isExporting, setIsExporting] = useState(false);
+  const totalPages = 3; 
 
   const handleNext = () => {
     if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
@@ -502,18 +389,65 @@ export default function App() {
     if (currentPage > 0) setCurrentPage(currentPage - 1);
   };
 
+  const handleExportPPTX = async () => {
+    setIsExporting(true);
+    try {
+      // 1. Chargement asynchrone des librairies nécessaires (html2canvas et pptxgenjs)
+      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js");
+      await loadScript("https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.min.js");
+      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+
+      const pptx = new window.PptxGenJS();
+      pptx.layout = 'LAYOUT_16x9'; // Format standard large pour présentation
+
+      // 2. Boucler sur les 3 slides cachées rendues expressément pour l'exportation
+      for (let i = 1; i <= 3; i++) {
+        const slideElement = document.getElementById(`export-slide-${i}`);
+        
+        // Capture l'élément HTML en Image Haute Définition
+        const canvas = await window.html2canvas(slideElement, { 
+          scale: 2,           // Haute résolution
+          useCORS: true, 
+          logging: false 
+        });
+        
+        const imgData = canvas.toDataURL("image/png");
+        
+        // Ajoute l'image dans une nouvelle diapositive PowerPoint
+        let slide = pptx.addSlide();
+        slide.addImage({ data: imgData, x: 0, y: 0, w: '100%', h: '100%' });
+      }
+
+      // 3. Déclenche le téléchargement du fichier final
+      pptx.writeFile({ fileName: "Presentation_Marketing.pptx" });
+      
+    } catch (error) {
+      console.error("Erreur lors de l'export PPTX:", error);
+      alert("Une erreur s'est produite lors de la génération du fichier PowerPoint.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="h-screen w-full bg-gradient-to-br from-[#dbeafe] via-[#e0f2fe] to-[#eff6ff] flex flex-col font-sans relative overflow-hidden">
       
-      {/* Éléments de décor en arrière-plan (Style géométrique Canva) */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-60">
-        <div className="blob-1 absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-blue-400 rounded-full blur-[120px]"></div>
-        <div className="blob-2 absolute bottom-[10%] -right-[10%] w-[40%] h-[60%] bg-indigo-400 rounded-full blur-[100px]"></div>
-        <svg className="absolute w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
-          <line x1="-10%" y1="110%" x2="110%" y2="-10%" stroke="white" strokeWidth="4" />
-          <line x1="-10%" y1="90%" x2="90%" y2="-10%" stroke="white" strokeWidth="2" />
-        </svg>
+      {/* Conteneur CACHÉ utilisé uniquement par html2canvas pour créer le .pptx parfait */}
+      {/* Il génère les slides en 1280x720 (Standard HD 16:9) pour que la conversion soit exacte */}
+      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', opacity: 0, zIndex: -999 }}>
+        {[1, 2, 3].map((num) => (
+          <div key={num} id={`export-slide-${num}`} className="w-[1280px] h-[720px] bg-gradient-to-br from-[#dbeafe] via-[#e0f2fe] to-[#eff6ff] flex flex-col p-8 relative overflow-hidden">
+            <Background />
+            <div className="bg-white/20 backdrop-blur-sm flex-1 p-8 rounded-3xl shadow-2xl border border-white/40 flex flex-col z-10">
+              {num === 1 && <Slide1 isExport={true} />}
+              {num === 2 && <Slide2 isExport={true} />}
+              {num === 3 && <Slide3 isExport={true} />}
+            </div>
+          </div>
+        ))}
       </div>
+
+      <Background />
 
       {/* Conteneur principal 100% Plein Écran */}
       <div className="relative w-full h-full bg-white/20 backdrop-blur-sm flex flex-col z-10">
@@ -523,8 +457,21 @@ export default function App() {
           
           {/* Entête (Simulateur) */}
           <div className="flex justify-between items-center mb-6 z-10 shrink-0">
-            <div className="flex items-center gap-2 text-indigo-900 font-bold bg-white/60 backdrop-blur-md px-5 py-2.5 rounded-full text-sm shadow-sm border border-white/50">
-              <Presentation className="w-5 h-5" /> Plateforme de Présentation
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-indigo-900 font-bold bg-white/60 backdrop-blur-md px-5 py-2.5 rounded-full text-sm shadow-sm border border-white/50">
+                <Presentation className="w-5 h-5" /> Plateforme de Présentation
+              </div>
+              <button 
+                onClick={handleExportPPTX}
+                disabled={isExporting}
+                className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-lg transition-transform hover:scale-105 disabled:opacity-70 disabled:hover:scale-100"
+              >
+                {isExporting ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Génération PPTX...</>
+                ) : (
+                  <><Download className="w-4 h-4" /> Exporter (.pptx)</>
+                )}
+              </button>
             </div>
             <div className="text-sm font-semibold text-indigo-900 bg-white/60 backdrop-blur-md px-5 py-2.5 rounded-full shadow-sm border border-white/50">
               Page {currentPage + 1} / {totalPages}
@@ -536,7 +483,6 @@ export default function App() {
             {currentPage === 0 && <Slide1 />}
             {currentPage === 1 && <Slide2 />}
             {currentPage === 2 && <Slide3 />}
-            {currentPage === 3 && <Slide4 />}
           </div>
         </div>
 
@@ -571,33 +517,17 @@ export default function App() {
       
       {/* Styles globaux injectés (Animations et CSS Avancé) */}
       <style dangerouslySetInnerHTML={{__html: `
-        /* Barre de défilement (Scrollbar) personnalisée et discrète */
-        ::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: rgba(79, 70, 229, 0.4);
-          border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: rgba(79, 70, 229, 0.7);
-        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.4); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(79, 70, 229, 0.7); }
 
-        /* Animations d'apparition de la page */
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(15px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-in {
-          animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
+        .animate-fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-        /* Animations flottantes fluides de l'arrière-plan */
         @keyframes float1 {
           0%, 100% { transform: translate(0, 0) scale(1); }
           50% { transform: translate(2%, 5%) scale(1.05); }
@@ -609,18 +539,16 @@ export default function App() {
         .blob-1 { animation: float1 12s ease-in-out infinite; }
         .blob-2 { animation: float2 15s ease-in-out infinite; }
 
-        /* Effets de survol interactifs 3D sur les graphiques (Charts) */
         .chart-slice {
           transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-          /* Le centre du cercle SVG est à 0,0 mathématiquement */
           transform-origin: 0px 0px; 
         }
         .chart-slice:hover {
-          transform: scale(1.08); /* Zoom dynamique sur la part de camembert */
+          transform: scale(1.08); 
           z-index: 10;
         }
         .chart-slice:hover path {
-          filter: brightness(1.1); /* Rend la couleur plus éclatante */
+          filter: brightness(1.1); 
           stroke-width: 0.04;
           stroke: #ffffff;
         }
